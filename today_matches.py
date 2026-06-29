@@ -38,8 +38,11 @@ ALLOWED_LEAGUE_IDS = {
     15115,
     # Mexico Liga MX
     12136, 15234,
-    # FIFA Club World Cup
+    # FIFA Club World Cup (2025 - finished)
     13878,
+    # FIFA World Cup - national teams, 2026 edition (LIVE). Select season 16494 in your
+    # FootyStats API dashboard for this to return data.
+    16494,
 }
 
 # League ID to Name mapping - ensures consistent league names
@@ -64,6 +67,7 @@ LEAGUE_ID_TO_NAME = {
     12136: "Mexico Liga MX",
     15234: "Mexico Liga MX",
     13878: "FIFA Club World Cup",
+    16494: "FIFA World Cup",
 }
 
 class FootyStatsAPI:
@@ -89,15 +93,15 @@ class FootyStatsAPI:
                 response.raise_for_status()
                 data = response.json()
                 if not data.get("success", False):
-                    print(f"✗ API error: {data.get('error', 'Unknown')}")
+                    print(f"X API error: {data.get('error', 'Unknown')}")
                     return None
                 return data
             except requests.exceptions.Timeout:
-                print(f"⚠ Timeout (attempt {attempt + 1}/{self.max_retries})")
+                print(f"Timeout (attempt {attempt + 1}/{self.max_retries})")
                 if attempt < self.max_retries - 1:
                     time.sleep(2)
             except requests.exceptions.RequestException as e:
-                print(f"✗ Error (attempt {attempt + 1}/{self.max_retries}): {str(e)[:100]}")
+                print(f"Error (attempt {attempt + 1}/{self.max_retries}): {str(e)[:100]}")
                 if attempt < self.max_retries - 1:
                     time.sleep(2)
         return None
@@ -324,7 +328,7 @@ def remove_empty_columns(df: pd.DataFrame, threshold: float = 0.95) -> pd.DataFr
     
     removed_cols = initial_cols - len(cols_to_keep)
     if removed_cols > 0:
-        print(f"   ✓ Removed {removed_cols} empty columns (>{threshold*100:.0f}% NaN)")
+        print(f"   Removed {removed_cols} empty columns (>{threshold*100:.0f}% NaN)")
     
     return df_cleaned
 
@@ -337,10 +341,10 @@ def main():
     print("=" * 80)
     print()
     
-    print("🔍 LEAGUE FILTER ACTIVE")
+    print("LEAGUE FILTER ACTIVE")
     print(f"   Only saving matches from {len(ALLOWED_LEAGUE_IDS)} league IDs")
     print(f"   Leagues: Premier League, La Liga, Serie A, Bundesliga, MLS,")
-    print(f"            Ligue 1, Eredivisie, LigaPro, Liga MX, UEFA, FIFA CWC")
+    print(f"            Ligue 1, Eredivisie, LigaPro, Liga MX, UEFA, FIFA CWC, World Cup")
     print()
     
     api_client = FootyStatsAPI(API_KEY)
@@ -353,7 +357,7 @@ def main():
     for offset_day, label in enumerate(day_labels):
         fetch_date = (base_day + timedelta(days=offset_day)).strftime('%Y-%m-%d')
         dates_info.append(f"{label} ({fetch_date})")
-        print(f"📅 Fetching {label} ({fetch_date})")
+        print(f"Fetching {label} ({fetch_date})")
         print('-' * 80)
         
         page = 1
@@ -384,7 +388,7 @@ def main():
             filtered_out = matches_before_filter - len(filtered_matches)
             
             day_matches.extend(filtered_matches)
-            print(f"✓ {len(matches)} matches (kept {len(filtered_matches)}, filtered {filtered_out})")
+            print(f"{len(matches)} matches (kept {len(filtered_matches)}, filtered {filtered_out})")
             
             pager = data.get("pager", {})
             if pager.get('current_page', 0) >= pager.get('max_page', 0):
@@ -398,7 +402,7 @@ def main():
     if all_matches_combined:
         filename = "live.csv"
         print("\n" + "=" * 80)
-        print(f"💾 Processing and saving to: {filename}")
+        print(f"Processing and saving to: {filename}")
         print("=" * 80)
         
         # Extract data to DataFrame
@@ -412,27 +416,27 @@ def main():
         # Save to CSV
         df.to_csv(filename, index=False)
         
-        print(f"\n✓ Saved {len(df)} matches to {filename}")
-        print(f"✓ Columns: {len(df.columns)} (kept only populated fields)")
-        print(f"✓ API requests: {api_client.request_count}")
+        print(f"\nSaved {len(df)} matches to {filename}")
+        print(f"Columns: {len(df.columns)} (kept only populated fields)")
+        print(f"API requests: {api_client.request_count}")
         
         # Show summary
-        print(f"\n📊 Summary:")
+        print(f"\nSummary:")
         print(f"   Total matches: {len(df)}")
         print(f"   Date range: {', '.join(dates_info)}")
         print(f"   Unique leagues: {df['league_name'].nunique() if 'league_name' in df.columns else 'N/A'}")
         
         # Show leagues breakdown
         if 'league_name' in df.columns and 'league_id' in df.columns:
-            print(f"\n📋 Leagues Included (Filtered):")
+            print(f"\nLeagues Included (Filtered):")
             league_summary = df.groupby(['league_name', 'league_id']).size().reset_index(name='count')
             league_summary = league_summary.sort_values('count', ascending=False)
             for _, row in league_summary.iterrows():
-                print(f"   • {row['league_name']:<30} (ID: {row['league_id']:<6}) - {row['count']} matches")
+                print(f"   - {row['league_name']:<30} (ID: {row['league_id']:<6}) - {row['count']} matches")
         
         
         # Show key fields status
-        print(f"\n📋 Key Fields Availability:")
+        print(f"\nKey Fields Availability:")
         key_fields = ['competition_id', 'team_a_xg_prematch', 'team_b_xg_prematch', 
                      'pre_match_teamA_ppg', 'pre_match_teamB_ppg', 'odds_ft_1', 
                      'odds_ft_over25', 'CTMCL']
@@ -440,16 +444,16 @@ def main():
             if field in df.columns:
                 non_empty = df[field].notna().sum()
                 pct = (non_empty / len(df)) * 100
-                status = "✓" if pct > 50 else "⚠"
+                status = "OK" if pct > 50 else "!!"
                 print(f"   {status} {field}: {non_empty}/{len(df)} ({pct:.1f}%)")
         
-        print(f"\n✅ Ready for prediction model!")
+        print(f"\nReady for prediction model!")
         
     else:
-        print("✗ No matches found")
+        print("No matches found")
     
     print("\n" + "=" * 80)
-    print("✅ Complete!")
+    print("Complete!")
     print("=" * 80)
 
 
