@@ -5,20 +5,26 @@
   const $ = (s, r = document) => r.querySelector(s);
   const CFG = window.SUPABASE_CFG;
 
-  // team name -> flag emoji (fallback: soccer ball)
-  const FLAGS = {
-    "Brazil": "🇧🇷", "Japan": "🇯🇵", "Germany": "🇩🇪", "Paraguay": "🇵🇾",
-    "Netherlands": "🇳🇱", "Morocco": "🇲🇦", "Ivory Coast": "🇨🇮", "Norway": "🇳🇴",
-    "France": "🇫🇷", "Sweden": "🇸🇪", "Mexico": "🇲🇽", "Ecuador": "🇪🇨",
-    "England": "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "Congo DR": "🇨🇩", "Belgium": "🇧🇪", "Senegal": "🇸🇳",
-    "USMNT": "🇺🇸", "USA": "🇺🇸", "Bosnia and Herzegovina": "🇧🇦", "Spain": "🇪🇸",
-    "Austria": "🇦🇹", "Portugal": "🇵🇹", "Croatia": "🇭🇷", "Switzerland": "🇨🇭",
-    "Algeria": "🇩🇿", "Australia": "🇦🇺", "Egypt": "🇪\ud83c\udd ac".replace(/ /g,""), "Argentina": "🇦🇷",
-    "Cape Verde Islands": "🇨🇻", "Colombia": "🇨🇴", "Ghana": "\ud83c\udd ac🇭".replace(/ /g,""), "Uruguay": "🇺🇾",
-    "Italy": "🇮🇹", "Canada": "🇨🇦", "South Korea": "🇰🇷", "Saudi Arabia": "🇸🇦",
-    "Tunisia": "🇹🇳", "Iraq": "🇮🇶", "Czechia": "🇨🇿", "South Africa": "🇿🇦",
+  // team name -> ISO-3166 alpha-2; flag emoji is computed from it at runtime
+  // (keeps this file pure-ASCII and avoids fragile emoji escaping).
+  const ISO = {
+    "Brazil": "BR", "Japan": "JP", "Germany": "DE", "Paraguay": "PY",
+    "Netherlands": "NL", "Morocco": "MA", "Ivory Coast": "CI", "Norway": "NO",
+    "France": "FR", "Sweden": "SE", "Mexico": "MX", "Ecuador": "EC",
+    "England": "GB", "Congo DR": "CD", "Belgium": "BE", "Senegal": "SN",
+    "USMNT": "US", "USA": "US", "Bosnia and Herzegovina": "BA", "Spain": "ES",
+    "Austria": "AT", "Portugal": "PT", "Croatia": "HR", "Switzerland": "CH",
+    "Algeria": "DZ", "Australia": "AU", "Egypt": "EG", "Argentina": "AR",
+    "Cape Verde Islands": "CV", "Colombia": "CO", "Ghana": "GH", "Uruguay": "UY",
+    "Italy": "IT", "Canada": "CA", "South Korea": "KR", "Saudi Arabia": "SA",
+    "Tunisia": "TN", "Iraq": "IQ", "Czechia": "CZ", "South Africa": "ZA",
+    "Turkey": "TR", "Portugal Liga NOS": "PT",
   };
-  const flag = (name) => FLAGS[name] || "⚽";
+  function flag(name) {
+    const c = ISO[name];
+    if (!c || c.length !== 2) return "⚽";
+    return String.fromCodePoint(...[...c].map((ch) => 0x1f1e6 + ch.charCodeAt(0) - 65));
+  }
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
