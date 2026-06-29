@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FIFA World Cup 2026 — Model Predictions</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="pitch-bg" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <div class="wrap">
+      <div class="brand">
+        <span class="trophy" aria-hidden="true">🏆</span>
+        <div>
+          <h1>World Cup 2026 <span>· Model Predictions</span></h1>
+          <p class="tagline">Your Ridge model · FootyStats data · live from Supabase</p>
+        </div>
+      </div>
+      <div class="meta-bar" id="metaBar"></div>
+    </div>
+  </header>
+
+  <section class="controls wrap">
+    <input type="search" id="search" placeholder="Search a team…" aria-label="Search team" />
+    <select id="confFilter" aria-label="Filter by confidence">
+      <option value="all">All confidence</option>
+      <option value="High">High only</option>
+      <option value="Medium">Medium+</option>
+    </select>
+    <select id="sortBy" aria-label="Sort by">
+      <option value="date">Sort: date</option>
+      <option value="grade">Sort: grade</option>
+      <option value="confidence">Sort: confidence</option>
+    </select>
+    <button id="refreshBtn" class="btn" title="Re-fetch from Supabase">⟳ Refresh</button>
+    <button id="printBtn" class="btn btn-ghost">⤓ Save / Print</button>
+  </section>
+
+  <main id="cards" class="cards wrap">
+    <p class="empty" id="loading">Loading predictions from Supabase…</p>
+  </main>
+
+  <footer class="site-footer wrap">
+    <p><strong>Disclaimer:</strong> Statistical model estimates for presentation only — not betting advice.
+       Predictions update automatically as the pipeline runs.</p>
+    <p class="gen" id="genFooter"></p>
+  </footer>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
