@@ -145,6 +145,12 @@ def load_and_transform():
     out["confidence_category"] = df["confidence_category"]
 
     out = out[PAYLOAD_COLUMNS]
+    # De-duplicate by match_id: a single Postgres upsert can't affect the same row
+    # twice (error 21000), and the 3-day fixture fetch can repeat a match.
+    before = len(out)
+    out = out.drop_duplicates(subset="match_id", keep="last")
+    if len(out) < before:
+        print(f"De-duplicated {before - len(out)} repeated match_id row(s)")
     records = [{k: _clean(v) for k, v in row.items()} for row in out.to_dict("records")]
     return records
 
