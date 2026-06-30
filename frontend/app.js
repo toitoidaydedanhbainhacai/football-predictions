@@ -48,8 +48,7 @@
     }
   }
 
-  function meta() {
-    const rows = state.rows;
+  function meta(rows) {
     const high = rows.filter((r) => r.confidence_category === "High").length;
     const totals = rows.map((r) => (+r.predicted_home_goals || 0) + (+r.predicted_away_goals || 0));
     const avg = totals.length ? totals.reduce((a, b) => a + b, 0) / totals.length : 0;
@@ -124,8 +123,13 @@
   }
 
   function render() {
-    meta();
-    let list = state.rows.slice();
+    // Show only upcoming matches (today onward). Upserts never delete, so played
+    // fixtures otherwise linger in Supabase. Dates are stored as YYYY-MM-DD text.
+    const t = new Date();
+    const todayStr = `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
+    const base = state.rows.filter((r) => !r.date || String(r.date) >= todayStr);
+    meta(base);
+    let list = base.slice();
     const q = state.q.trim().toLowerCase();
     if (q) list = list.filter((r) => `${r.home_team} ${r.away_team}`.toLowerCase().includes(q));
     if (state.conf === "High") list = list.filter((r) => r.confidence_category === "High");
@@ -138,7 +142,7 @@
 
     $("#cards").innerHTML = list.length
       ? list.map(card).join("")
-      : '<p class="empty">No picks match this filter.</p>';
+      : '<p class="empty">No upcoming picks right now — check back after the next run.</p>';
   }
 
   $("#search").addEventListener("input", (e) => { state.q = e.target.value; render(); });
